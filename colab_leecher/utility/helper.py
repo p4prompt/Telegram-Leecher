@@ -178,30 +178,50 @@ def download_image(url, save_path):
         print(f"Error downloading image: {e}")
         return False
         
-def thumbMaintainer(file_path):
-    if os.path.exists(Paths.VIDEO_FRAME):
-        os.remove(Paths.VIDEO_FRAME)
-    try:
-        fname, _ = os.path.splitext(os.path.basename(file_path))
-        ytdl_thmb = f"{Paths.WORK_PATH}/ytdl_thumbnails/{fname}.webp"
+# def thumbMaintainer(file_path):
+#     if os.path.exists(Paths.VIDEO_FRAME):
+#         os.remove(Paths.VIDEO_FRAME)
+#     try:
+#         fname, _ = os.path.splitext(os.path.basename(file_path))
+#         ytdl_thmb = f"{Paths.WORK_PATH}/ytdl_thumbnails/{fname}.webp"
         
+#         with VideoFileClip(file_path) as video:
+#             if os.path.exists(Paths.THMB_PATH):
+#                 return Paths.THMB_PATH, video.duration
+#             elif os.path.exists(ytdl_thmb):
+#                 return convertIMG(ytdl_thmb), video.duration
+#             else:
+#                 # Download a random image from https://picsum.photos/200/300
+#                 image_url = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiUKTFrSpicTqN4Jg1ljkbghFINM9EVEoRqK68pX6mzlWJw0zk3Eu1X7k4mLH6Hmc8IaLiIUieH4bLIhfleUDwjDrOWT3NrJA_FPX__6gE3RXzGUGPgwQFerphparBksqEl_wyDeskJjemrHdsvMFXU6iFHJNiiNq9KUhpNXChGXuulMSY1z2tzlF6ImIo/s16000/y.jpg"  # Random image URL
+#                 if download_image(image_url, Paths.VIDEO_FRAME):
+#                     return Paths.VIDEO_FRAME, video.duration
+#                 else:
+#                     # Fallback to a default image if download fails
+#                     return Paths.BRAND_PATH, video.duration
+#     except Exception as e:
+#         print(f"Thmb Gen ERROR: {e}")
+#         if os.path.exists(Paths.THMB_PATH):
+#             return Paths.THMB_PATH, 0
+#         return Paths.BRAND_PATH, 0
+
+def thumbMaintainer(file_path):
+    """
+    Always use a custom image path (BRAND_PATH) as the thumbnail.
+    Returns the custom image path and the video duration.
+    """
+    try:
+        # Custom image path
+        BRAND_PATH = "/content/Telegram-Leecher/colab_leecher/downlader/y.jpg"
+
+        # Get the video duration
         with VideoFileClip(file_path) as video:
-            if os.path.exists(Paths.THMB_PATH):
-                return Paths.THMB_PATH, video.duration
-            elif os.path.exists(ytdl_thmb):
-                return convertIMG(ytdl_thmb), video.duration
-            else:
-                # Download a random image from https://picsum.photos/200/300
-                image_url = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiUKTFrSpicTqN4Jg1ljkbghFINM9EVEoRqK68pX6mzlWJw0zk3Eu1X7k4mLH6Hmc8IaLiIUieH4bLIhfleUDwjDrOWT3NrJA_FPX__6gE3RXzGUGPgwQFerphparBksqEl_wyDeskJjemrHdsvMFXU6iFHJNiiNq9KUhpNXChGXuulMSY1z2tzlF6ImIo/s16000/y.jpg"  # Random image URL
-                if download_image(image_url, Paths.VIDEO_FRAME):
-                    return Paths.VIDEO_FRAME, video.duration
-                else:
-                    # Fallback to a default image if download fails
-                    return Paths.BRAND_PATH, video.duration
+            duration = video.duration
+
+        # Return the custom image path and video duration
+        return BRAND_PATH, duration
     except Exception as e:
         print(f"Thmb Gen ERROR: {e}")
-        if os.path.exists(Paths.THMB_PATH):
-            return Paths.THMB_PATH, 0
+        # Fallback to a default image if something goes wrong
         return Paths.BRAND_PATH, 0
 
 
