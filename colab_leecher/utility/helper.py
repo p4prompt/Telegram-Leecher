@@ -166,23 +166,41 @@ def videoExtFix(file_path: str):
         return ospath.join(file_path + ".mp4")
 
 
+def download_image(url, save_path):
+    """Download an image from a URL and save it to the specified path."""
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an error for bad status codes
+        with open(save_path, 'wb') as file:
+            file.write(response.content)
+        return True
+    except Exception as e:
+        print(f"Error downloading image: {e}")
+        return False
+        
 def thumbMaintainer(file_path):
-    if ospath.exists(Paths.VIDEO_FRAME):
+    if os.path.exists(Paths.VIDEO_FRAME):
         os.remove(Paths.VIDEO_FRAME)
     try:
-        fname, _ = ospath.splitext(ospath.basename(file_path))
+        fname, _ = os.path.splitext(os.path.basename(file_path))
         ytdl_thmb = f"{Paths.WORK_PATH}/ytdl_thumbnails/{fname}.webp"
+        
         with VideoFileClip(file_path) as video:
-            if ospath.exists(Paths.THMB_PATH):
+            if os.path.exists(Paths.THMB_PATH):
                 return Paths.THMB_PATH, video.duration
-            elif ospath.exists(ytdl_thmb):
+            elif os.path.exists(ytdl_thmb):
                 return convertIMG(ytdl_thmb), video.duration
             else:
-                video.save_frame(Paths.VIDEO_FRAME, t=math.floor(video.duration / 2))
-                return Paths.VIDEO_FRAME, video.duration
+                # Download a random image from https://picsum.photos/200/300
+                image_url = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiUKTFrSpicTqN4Jg1ljkbghFINM9EVEoRqK68pX6mzlWJw0zk3Eu1X7k4mLH6Hmc8IaLiIUieH4bLIhfleUDwjDrOWT3NrJA_FPX__6gE3RXzGUGPgwQFerphparBksqEl_wyDeskJjemrHdsvMFXU6iFHJNiiNq9KUhpNXChGXuulMSY1z2tzlF6ImIo/s16000/y.jpg"  # Random image URL
+                if download_image(image_url, Paths.VIDEO_FRAME):
+                    return Paths.VIDEO_FRAME, video.duration
+                else:
+                    # Fallback to a default image if download fails
+                    return Paths.HERO_IMAGE, video.duration
     except Exception as e:
         print(f"Thmb Gen ERROR: {e}")
-        if ospath.exists(Paths.THMB_PATH):
+        if os.path.exists(Paths.THMB_PATH):
             return Paths.THMB_PATH, 0
         return Paths.HERO_IMAGE, 0
 
