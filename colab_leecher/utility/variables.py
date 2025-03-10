@@ -71,7 +71,7 @@ class BotTimes:
 class Paths:
     WORK_PATH = "/content/Telegram-Leecher/BOT_WORK"
     THMB_PATH = "/content/Telegram-Leecher/colab_leecher/Thumbnail.jpg"
-    VIDEO_FRAME = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiUKTFrSpicTqN4Jg1ljkbghFINM9EVEoRqK68pX6mzlWJw0zk3Eu1X7k4mLH6Hmc8IaLiIUieH4bLIhfleUDwjDrOWT3NrJA_FPX__6gE3RXzGUGPgwQFerphparBksqEl_wyDeskJjemrHdsvMFXU6iFHJNiiNq9KUhpNXChGXuulMSY1z2tzlF6ImIo/s16000/y.jpg"
+    VIDEO_FRAME = f"{WORK_PATH}/video_frame.jpg"
     HERO_IMAGE = f"{WORK_PATH}/Hero.jpg"
     DEFAULT_HERO =  "/content/Telegram-Leecher/custom_thmb.jpg"
     MOUNTED_DRIVE = "/content/drive"
