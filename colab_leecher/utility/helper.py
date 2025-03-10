@@ -197,12 +197,12 @@ def thumbMaintainer(file_path):
                     return Paths.VIDEO_FRAME, video.duration
                 else:
                     # Fallback to a default image if download fails
-                    return Paths.HERO_IMAGE, video.duration
+                    return Paths.BRAND_PATH, video.duration
     except Exception as e:
         print(f"Thmb Gen ERROR: {e}")
         if os.path.exists(Paths.THMB_PATH):
             return Paths.THMB_PATH, 0
-        return Paths.HERO_IMAGE, 0
+        return Paths.BRAND_PATH, 0
 
 
 async def setThumbnail(message):
