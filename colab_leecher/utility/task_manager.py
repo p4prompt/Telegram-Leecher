@@ -1,13 +1,13 @@
 # copyright 2024 © Xron Trix | https://github.com/Xrontrix10
 
-
+import os
 import pytz
 import shutil
 import logging
 from time import time
 from datetime import datetime
 from asyncio import sleep
-from os import makedirs, path as ospath, system
+from os import path as ospath, system
 from colab_leecher import OWNER, colab_bot, DUMP_ID
 from colab_leecher.downlader.manager import calDownSize, get_d_name, downloadManager
 from colab_leecher.utility.helper import (
@@ -45,7 +45,7 @@ async def task_starter(message, text):
     global BOT
     await message.delete()
     BOT.State.started = True
-    if BOT.State.task_going == False:
+    if not BOT.State.task_going:
         src_request_msg = await message.reply_text(text)
         return src_request_msg
     else:
@@ -59,16 +59,19 @@ async def task_starter(message, text):
 
 async def taskScheduler():
     global BOT, MSG, BotTimes, Messages, Paths, Transfer, TaskError
+
+    # Always reset down_path to default working folder
+    Paths.down_path = f"{Paths.WORK_PATH}/Downloads"
+
     src_text = []
-    is_dualzip, is_unzip, is_zip, is_dir = (
-        BOT.Mode.type == "undzip",
-        BOT.Mode.type == "unzip",
-        BOT.Mode.type == "zip",
-        BOT.Mode.mode == "dir-leech",
-    )
-    # Reset Texts
+    is_dualzip = (BOT.Mode.type == "undzip")
+    is_unzip = (BOT.Mode.type == "unzip")
+    is_zip = (BOT.Mode.type == "zip")
+    is_dir = (BOT.Mode.mode == "dir-leech")
+
+    # Reset state
     Messages.download_name = ""
-    Messages.task_msg = f"<b>🦞 TASK MODE » </b>"
+    Messages.task_msg = "<b>🦞 TASK MODE » </b>"
     Messages.dump_task = (
         Messages.task_msg
         + f"<i>{BOT.Mode.type.capitalize()} {BOT.Mode.mode.capitalize()} as {BOT.Setting.stream_upload}</i>\n\n<b>🖇️ SOURCES » </b>"
@@ -79,7 +82,7 @@ async def taskScheduler():
     Transfer.up_bytes = [0, 0]
     Messages.download_name = ""
     Messages.task_msg = ""
-    Messages.status_head = f"<b>📥 DOWNLOADING » </b>\n"
+    Messages.status_head = "<b>📥 DOWNLOADING » </b>\n"
 
     if is_dir:
         if not ospath.exists(BOT.SOURCE[0]):
@@ -87,8 +90,7 @@ async def taskScheduler():
             TaskError.text = "Task Failed. Because: Provided Directory Path Not Exists"
             logging.error(TaskError.text)
             return
-        if not ospath.exists(Paths.temp_dirleech_path):
-            makedirs(Paths.temp_dirleech_path)
+        os.makedirs(Paths.temp_dirleech_path, exist_ok=True)
         Messages.dump_task += f"\n\n📂 <code>{BOT.SOURCE[0]}</code>"
         Transfer.total_down_size = getSize(BOT.SOURCE[0])
         Messages.download_name = ospath.basename(BOT.SOURCE[0])
@@ -116,20 +118,23 @@ async def taskScheduler():
             else:
                 Messages.dump_task += code_link
 
-    # Get the current date and time in the specified time zone
+    # Get current date & time
     cdt = datetime.now(pytz.timezone("Asia/Kolkata"))
     dt = cdt.strftime(" %d-%m-%Y")
     Messages.dump_task += f"\n\n<b>📆 Task Date » </b><i>{dt}</i>"
-
     src_text.append(Messages.dump_task)
 
+    # Clean previous work directory safely
     if ospath.exists(Paths.WORK_PATH):
-        shutil.rmtree(Paths.WORK_PATH)
-        # makedirs(Paths.WORK_PATH)
-        makedirs(Paths.down_path)
-    else:
-        makedirs(Paths.WORK_PATH)
-        makedirs(Paths.down_path)
+        try:
+            shutil.rmtree(Paths.WORK_PATH)
+        except Exception as e:
+            logging.warning(f"Failed to clear WORK_PATH: {e}")
+
+    # Recreate download path cleanly
+    os.makedirs(Paths.down_path, exist_ok=True)
+
+    # Format DUMP_ID safely
     dump_str = str(DUMP_ID)
     if dump_str.startswith("-100"):
         Messages.link_p = dump_str[4:]
@@ -154,12 +159,12 @@ async def taskScheduler():
 
     await MSG.status_msg.delete()
     img = Paths.THMB_PATH if ospath.exists(Paths.THMB_PATH) else Paths.HERO_IMAGE
-    MSG.status_msg = await colab_bot.send_photo(  # type: ignore
+    MSG.status_msg = await colab_bot.send_photo(
         chat_id=OWNER,
         photo=img,
         caption=Messages.task_msg
         + Messages.status_head
-        + f"\n📝 __Starting DOWNLOAD...__"
+        + "\n📝 __Starting DOWNLOAD...__"
         + sysINFO(),
         reply_markup=keyboard(),
     )
@@ -173,8 +178,7 @@ async def taskScheduler():
 
     if is_zip:
         Paths.down_path = ospath.join(Paths.down_path, Messages.download_name)
-        if not ospath.exists(Paths.down_path):
-            makedirs(Paths.down_path)
+        os.makedirs(Paths.down_path, exist_ok=True)
 
     BotTimes.current_time = time()
 
@@ -191,23 +195,23 @@ async def Do_Leech(source, is_dir, is_ytdl, is_zip, is_unzip, is_dualzip):
                 logging.error("Provided directory does not exist !")
                 await cancelTask("Provided directory does not exist !")
                 return
-            Paths.down_path = s
+            target_path = s
             if is_zip:
-                await Zip_Handler(Paths.down_path, True, False)
+                await Zip_Handler(target_path, True, False)
                 await Leech(Paths.temp_zpath, True)
             elif is_unzip:
-                await Unzip_Handler(Paths.down_path, False)
+                await Unzip_Handler(target_path, False)
                 await Leech(Paths.temp_unzip_path, True)
             elif is_dualzip:
-                await Unzip_Handler(Paths.down_path, False)
+                await Unzip_Handler(target_path, False)
                 await Zip_Handler(Paths.temp_unzip_path, True, True)
                 await Leech(Paths.temp_zpath, True)
             else:
                 if ospath.isdir(s):
-                    await Leech(Paths.down_path, False)
+                    await Leech(target_path, False)
                 else:
                     Transfer.total_down_size = ospath.getsize(s)
-                    makedirs(Paths.temp_dirleech_path)
+                    os.makedirs(Paths.temp_dirleech_path, exist_ok=True)
                     shutil.copy(s, Paths.temp_dirleech_path)
                     Messages.download_name = ospath.basename(s)
                     await Leech(Paths.temp_dirleech_path, True)
@@ -227,7 +231,6 @@ async def Do_Leech(source, is_dir, is_ytdl, is_zip, is_unzip, is_dualzip):
             await Unzip_Handler(Paths.down_path, True)
             await Leech(Paths.temp_unzip_path, True)
         elif is_dualzip:
-            print("Got into un doubled zip")
             await Unzip_Handler(Paths.down_path, True)
             await Zip_Handler(Paths.temp_unzip_path, True, True)
             await Leech(Paths.temp_zpath, True)
@@ -244,8 +247,7 @@ async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
         )
         return
 
-    if not ospath.exists(Paths.mirror_dir):
-        makedirs(Paths.mirror_dir)
+    os.makedirs(Paths.mirror_dir, exist_ok=True)
 
     await downloadManager(source, is_ytdl)
 
@@ -254,20 +256,21 @@ async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
     applyCustomName()
 
     cdt = datetime.now()
-    cdt_ = cdt.strftime("Uploaded » %Y-%m-%d %H:%M:%S")
+    # Fixed: No colons in folder names for Google Drive compatibility
+    cdt_ = cdt.strftime("Uploaded » %Y-%m-%d %H-%M-%S")
     mirror_dir_ = ospath.join(Paths.mirror_dir, cdt_)
 
     if is_zip:
         await Zip_Handler(Paths.down_path, True, True)
-        shutil.copytree(Paths.temp_zpath, mirror_dir_)
+        shutil.copytree(Paths.temp_zpath, mirror_dir_, dirs_exist_ok=True)
     elif is_unzip:
         await Unzip_Handler(Paths.down_path, True)
-        shutil.copytree(Paths.temp_unzip_path, mirror_dir_)
+        shutil.copytree(Paths.temp_unzip_path, mirror_dir_, dirs_exist_ok=True)
     elif is_dualzip:
         await Unzip_Handler(Paths.down_path, True)
         await Zip_Handler(Paths.temp_unzip_path, True, True)
-        shutil.copytree(Paths.temp_zpath, mirror_dir_)
+        shutil.copytree(Paths.temp_zpath, mirror_dir_, dirs_exist_ok=True)
     else:
-        shutil.copytree(Paths.down_path, mirror_dir_)
+        shutil.copytree(Paths.down_path, mirror_dir_, dirs_exist_ok=True)
 
     await SendLogs(False)
