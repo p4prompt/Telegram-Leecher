@@ -130,7 +130,13 @@ async def taskScheduler():
     else:
         makedirs(Paths.WORK_PATH)
         makedirs(Paths.down_path)
-    Messages.link_p = str(DUMP_ID)[4:]
+    dump_str = str(DUMP_ID)
+    if dump_str.startswith("-100"):
+        Messages.link_p = dump_str[4:]
+    elif dump_str.startswith("-"):
+        Messages.link_p = dump_str[1:]
+    else:
+        Messages.link_p = dump_str
 
     try:
         system(f"aria2c -d {Paths.WORK_PATH} -o Hero.jpg {Aria2c.pic_dwn_url}")
